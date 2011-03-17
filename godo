@@ -8,7 +8,15 @@ function usage () {
 function dostuff () {
 	local d="$TMPDIR/$$.$RANDOM"
 	if mkdir $d; then
-		6g -o $d/tmp.6 "$1" && 6l -o $d/tmp.out $d/tmp.6 && $d/tmp.out
+		local infile=$d/tmp.go
+		
+		if test "#!" = `head -n1 "$1" | cut -c 1-2 `; then
+			sed -n '2,$p' $1 > $infile
+		else
+			cp "$1" $infile
+		fi
+		
+		6g -o $d/tmp.6 "$infile" && 6l -o $d/tmp.out $d/tmp.6 && $d/tmp.out
 		rm -rf $d
 	else
 		echo "could not create temporary directory... sigh"
