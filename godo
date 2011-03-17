@@ -5,31 +5,27 @@ function usage () {
 	echo "usage: $name <go-source-file>"
 }
 
-function dostuff () {
-	local d="$TMPDIR/$$.$RANDOM"
-	if mkdir $d; then
-		local infile=$d/tmp.go
-		
-		if test "#!" = `head -n1 "$1" | cut -c 1-2 `; then
-			sed -n '2,$p' $1 > $infile
-		else
-			cp "$1" $infile
-		fi
-		
-		6g -o $d/tmp.6 "$infile" && 6l -o $d/tmp.out $d/tmp.6 && $d/tmp.out
-		rm -rf $d
-	else
-		echo "could not create temporary directory... sigh"
-		exit 1
-	fi
-}
-
-if test -f "$1"; then
-	dostuff "$1"
-else
+if ! test -f "$1"; then
 	if test -n "$1"; then
 		echo "file not found: $1"
 	fi
 	usage
 	exit 1
 fi
+
+d="$TMPDIR/$$.$RANDOM"
+if ! mkdir $d; then
+	echo "could not create temporary directory... sigh"
+	exit 1
+fi
+
+gofile=$d/tmp.go
+
+if test "#!" = `head -n1 "$1" | cut -c 1-2 `; then
+	sed -n '2,$p' $1 > $gofile
+else
+	cp "$1" $gofile
+fi
+
+6g -o $d/tmp.6 "$gofile" && 6l -o $d/tmp.out $d/tmp.6 && $d/tmp.out
+rm -rf $d
