@@ -1,0 +1,27 @@
+#!/usr/bin/env sh
+
+function usage () {
+	local name=`basename $0`
+	echo "usage: $name <go-source-file>"
+}
+
+function dostuff () {
+	local d="$TMPDIR/$$.$RANDOM"
+	if mkdir $d; then
+		6g -o $d/tmp.6 "$1" && 6l -o $d/tmp.out $d/tmp.6 && $d/tmp.out
+		rm -rf $d
+	else
+		echo "could not create temporary directory... sigh"
+		exit 1
+	fi
+}
+
+if test -f "$1"; then
+	dostuff "$1"
+else
+	if test -n "$1"; then
+		echo "file not found: $1"
+	fi
+	usage
+	exit 1
+fi
