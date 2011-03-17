@@ -2,7 +2,7 @@
 
 function usage () {
 	local name=`basename $0`
-	echo "usage: $name <go-source-file>"
+	echo "usage: $name <go-source-file> ..."
 	exit 1
 }
 
