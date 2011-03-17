@@ -20,12 +20,18 @@ if ! mkdir $d; then
 fi
 
 gofile=$d/tmp.go
-
 if test "#!" = `head -n1 "$1" | cut -c 1-2 `; then
 	sed -n '2,$p' $1 > $gofile
 else
 	cp "$1" $gofile
 fi
 
-6g -o $d/tmp.6 "$gofile" && 6l -o $d/tmp.out $d/tmp.6 && $d/tmp.out
+cat > $d/Makefile <<EOF
+include \$(GOROOT)/src/Make.inc
+TARG=tmp.out
+GOFILES=$gofile
+include \$(GOROOT)/src/Make.cmd
+EOF
+
+make --directory=$d > /dev/null && $d/tmp.out
 rm -rf $d
