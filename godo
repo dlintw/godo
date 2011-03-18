@@ -31,13 +31,14 @@ for arg in "$@"; do
 	fi
 done
 
-TMP_GODO_DIR="$TMPDIR/$$.$RANDOM"
-if ! mkdir "$TMP_GODO_DIR"; then
+TMPDIR=`mktemp -d -t "godo.$RANDOM.$$"`
+
+if test $? != 0; then
 	echo "could not create temporary directory... sigh"
 	exit 1
 fi
 
-SRCDIR="$TMP_GODO_DIR/src"
+SRCDIR="$TMPDIR/src"
 mkdir "$SRCDIR"
 
 for file in "${FILES[@]}"; do
@@ -49,12 +50,12 @@ for file in "${FILES[@]}"; do
 	fi
 done
 
-cat > $TMP_GODO_DIR/Makefile <<EOF
+cat > $TMPDIR/Makefile <<EOF
 include \$(GOROOT)/src/Make.inc
 TARG=tmp.out
 GOFILES=$SRCDIR/*
 include \$(GOROOT)/src/Make.cmd
 EOF
 
-make --silent --directory=$TMP_GODO_DIR && $TMP_GODO_DIR/tmp.out "${ARGS[@]}"
-rm -rf $TMP_GODO_DIR
+make --silent --directory=$TMPDIR && $TMPDIR/tmp.out "${ARGS[@]}"
+rm -rf $TMPDIR
