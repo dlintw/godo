@@ -12,12 +12,14 @@ Either
 
 	godo script.go
 	godo script1.go script2.go
+	godo *.go
 	godo script1.go script2.go -- arg1 arg2 arg3
 
 Or
 
 	chmod +x script.go
 	./script.go
+	./script.go -- arg1 arg2 arg3
 	
 	# assuming `script.go` begins with "#!/usr/bin/env godo"
 
