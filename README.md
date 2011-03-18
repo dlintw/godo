@@ -11,6 +11,8 @@ Place the file anywhere in your $PATH and you're good to go.
 Either
 
 	godo script.go
+	godo script1.go script2.go
+	godo script1.go script2.go -- arg1 arg2 arg3
 
 Or
 
