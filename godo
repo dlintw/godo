@@ -15,7 +15,7 @@ usage() {
 
 # GOROOT must be set.
 if [[ $GOROOT == "" ]]; then
-	error "$$GOROOT is not set; use gomake or set $$GOROOT in your environment"
+	error "\$GOROOT is not set; use gomake or set \$GOROOT in your environment"
 fi
 
 if [[ $GOHOSTOS == "" ]]; then
@@ -30,7 +30,7 @@ case $GOOS in
 	darwin|freebsd|linux|plan9|tiny|windows)
 		;;
 	*)
-		error "Invalid $$GOOS '$GOOS'; must be darwin, freebsd, linux, plan9, tiny, or windows"
+		error "Invalid \$GOOS '$GOOS'; must be darwin, freebsd, linux, plan9, tiny, or windows"
 		;;
 esac
 
@@ -41,7 +41,7 @@ if [[ $GOHOSTARCH == "" ]]; then
 		GOHOSTARCH=$(if sysctl machdep.cpu.extfeatures | grep EM64T >/dev/null; then echo amd64; else uname -m | sed 's/i386/386/'; fi)
 	else
 		# Ask uname -m for the processor.
-		GOHOSTARCH=$(uname -m | sed 's/^..86$$/386/; s/^.86$$/386/; s/x86_64/amd64/; s/arm.*/arm/')
+		GOHOSTARCH=$(uname -m | sed 's/^..86\$/386/; s/^.86\$/386/; s/x86_64/amd64/; s/arm.*/arm/')
 	fi
 fi
 
@@ -64,11 +64,11 @@ case $GOARCH in
 	arm)
 		O=5
 		if [[ $GOOS != "linux" ]]; then
-			error "Invalid $$GOOS '$GOOS' for GOARCH=arm; must be linux"
+			error "Invalid \$GOOS '$GOOS' for GOARCH=arm; must be linux"
 		fi
 		;;
 	*)
-		error "Invalid $$GOARCH '$GOARCH'; must be 386, amd64, or arm"
+		error "Invalid \$GOARCH '$GOARCH'; must be 386, amd64, or arm"
 		;;
 esac
 
