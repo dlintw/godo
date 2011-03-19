@@ -27,9 +27,11 @@ if [[ $GOOS == "" ]]; then
 fi
 
 case $GOOS in
-darwin|freebsd|linux|plan9|tiny|windows) ;; *)
-	error "Invalid $$GOOS '$GOOS'; must be darwin, freebsd, linux, plan9, tiny, or windows"
-	;;
+	darwin|freebsd|linux|plan9|tiny|windows)
+		;;
+	*)
+		error "Invalid $$GOOS '$GOOS'; must be darwin, freebsd, linux, plan9, tiny, or windows"
+		;;
 esac
 
 if [[ $GOHOSTARCH == "" ]]; then
@@ -52,18 +54,23 @@ if [[ $GOOS == "darwin" ]]; then
 	GOHOSTARCH=$GOARCH
 fi
 
-if [[ $GOARCH == "386" ]]; then
-	O=8
-elif [[ $GOARCH == "amd64" ]]; then
-	O=6
-elif [[ $GOARCH == "arm" ]]; then
-	O=5
-	if ! [[ $GOOS == "linux" ]]; then
-		error "Invalid $$GOOS '$GOOS' for GOARCH=arm; must be linux"
-	fi
-else
-	error "Invalid $$GOARCH '$GOARCH'; must be 386, amd64, or arm"
-fi
+case $GOARCH in
+	386)
+		O=8
+		;;
+	amd64)
+		O=6
+		;;
+	arm)
+		O=5
+		if [[ $GOOS != "linux" ]]; then
+			error "Invalid $$GOOS '$GOOS' for GOARCH=arm; must be linux"
+		fi
+		;;
+	*)
+		error "Invalid $$GOARCH '$GOARCH'; must be 386, amd64, or arm"
+		;;
+esac
 
 GC=${O}g
 LD=${O}l
