@@ -1,10 +1,78 @@
 #!/usr/bin/env bash
 
-function usage {
-	local name=${0##*/}
-	echo "usage: $name <go-source-file> ..."
+error() {
+	echo $1
 	exit 1
 }
+
+usage() {
+	error "usage: ${0##*/} <go-source-file> ..."
+}
+
+
+### replacing the logic that Make.inc does
+
+
+# GOROOT must be set.
+if [[ $GOROOT == "" ]]; then
+	error "$$GOROOT is not set; use gomake or set $$GOROOT in your environment"
+fi
+
+if [[ $GOHOSTOS == "" ]]; then
+	GOHOSTOS=$(uname | tr A-Z a-z | sed 's/mingw/windows/; s/.*windows.*/windows/')
+fi
+
+if [[ $GOOS == "" ]]; then
+	GOOS=$GOHOSTOS
+fi
+
+case $GOOS in
+darwin|freebsd|linux|plan9|tiny|windows) ;; *)
+	error "Invalid $$GOOS '$GOOS'; must be darwin, freebsd, linux, plan9, tiny, or windows"
+	;;
+esac
+
+if [[ $GOHOSTARCH == "" ]]; then
+	if [[ $GOHOSTOS == "darwin" ]]; then
+		# Even on 64-bit platform, darwin uname -m prints i386.
+		# Check for amd64 with sysctl instead.
+		GOHOSTARCH=$(if sysctl machdep.cpu.extfeatures | grep EM64T >/dev/null; then echo amd64; else uname -m | sed 's/i386/386/'; fi)
+	else
+		# Ask uname -m for the processor.
+		GOHOSTARCH=$(uname -m | sed 's/^..86$$/386/; s/^.86$$/386/; s/x86_64/amd64/; s/arm.*/arm/')
+	fi
+fi
+
+if [[ $GOARCH == "" ]]; then
+	GOARCH=$GOHOSTARCH
+fi
+
+# darwin requires GOHOSTARCH match GOARCH
+if [[ $GOOS == "darwin" ]]; then
+	GOHOSTARCH=$GOARCH
+fi
+
+if [[ $GOARCH == "386" ]]; then
+	O=8
+elif [[ $GOARCH == "amd64" ]]; then
+	O=6
+elif [[ $GOARCH == "arm" ]]; then
+	O=5
+	if ! [[ $GOOS == "linux" ]]; then
+		error "Invalid $$GOOS '$GOOS' for GOARCH=arm; must be linux"
+	fi
+else
+	error "Invalid $$GOARCH '$GOARCH'; must be 386, amd64, or arm"
+fi
+
+GC=${O}g
+LD=${O}l
+
+
+### begin actual logic
+
+
+# filter out files from arguments, separated by "--"
 
 FILES=()
 ARGS=()
@@ -27,15 +95,13 @@ for arg in "$@"; do
 	fi
 done
 
-TMPDIR=$(mktemp -d -t "godo.$RANDOM.$$")
+# create a temp dir to put everything into
 
-if [[ $? != 0 ]]; then
-	echo "could not create temporary directory... sigh"
-	exit 1
-fi
-
+TMPDIR=$(mktemp -d -t "godo.$RANDOM.$$") || error "could not create temporary directory... sigh"
 SRCDIR="$TMPDIR/src"
 mkdir "$SRCDIR"
+
+# if stdin is assumed, then lets cat it into a temp .go file
 
 if (( ${#FILES[*]} == 0 )); then
 	TMPFILE="$TMPDIR/tmp.go"
@@ -43,17 +109,19 @@ if (( ${#FILES[*]} == 0 )); then
 	FILES[${#FILES[*]}]="$TMPFILE"
 fi
 
+# copy all files into the temp dir, stripping any beginning shebang lines
+
 for file in "${FILES[@]}"; do
 	DESTFILE="$SRCDIR/$(basename $file)"
 	awk 'NR==1 && /^#!/ { next } { print }' "$file" > "$DESTFILE"
 done
 
-cat > $TMPDIR/Makefile <<EOF
-include \$(GOROOT)/src/Make.inc
-TARG=tmp.out
-GOFILES=$SRCDIR/*
-include \$(GOROOT)/src/Make.cmd
-EOF
+# do the magic!
 
-make --silent --directory="$TMPDIR" && "$TMPDIR/tmp.out" "${ARGS[@]}"
+${GC} -o "$TMPDIR/_go_.${O}" "$SRCDIR/"* &&
+${LD} -o "$TMPDIR/tmp.exe" "$TMPDIR/_go_.$O" &&
+"$TMPDIR/tmp.exe" "${ARGS[@]}"
+
+# clean up, clean up, everybody everywhere, clean up, clean up, everybody do your share
+
 rm -rf "$TMPDIR"

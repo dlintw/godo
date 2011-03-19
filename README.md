@@ -2,6 +2,8 @@
 
 Shell script which allows running Go "scripts" like "godo script.go" in the style of "ruby script.rb" or "python script.py".
 
+Also, it no longer has any dependency on `make`. But it now depends on `bash`, which I'm fine with.
+
 ### Installation
 
 Place the file anywhere in your $PATH and you're good to go.
