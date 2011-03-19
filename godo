@@ -1,29 +1,25 @@
 #!/usr/bin/env bash
 
-function usage () {
-	local name=`basename $0`
+function usage {
+	local name=${0##*/}
 	echo "usage: $name <go-source-file> ..."
 	exit 1
 }
 
-if test -z "$*"; then
-	usage
-fi
-
 FILES=()
 ARGS=()
-DONE_WITH_FILES=
+DONE_WITH_FILES=false
 
 for arg in "$@"; do
-	if test "$arg" = "--"; then
-		DONE_WITH_FILES=1
+	if [[ "$arg" == "--" ]]; then
+		DONE_WITH_FILES=true
 		continue
 	fi
 	
-	if test -n "$DONE_WITH_FILES"; then
+	if $DONE_WITH_FILES; then
 		ARGS[${#ARGS[*]}]="$arg"
 	else
-		if ! test -f "$arg"; then
+		if ! [[ -f "$arg" ]]; then
 			echo "file not found: $arg"
 			usage
 		fi
@@ -31,9 +27,9 @@ for arg in "$@"; do
 	fi
 done
 
-TMPDIR=`mktemp -d -t "godo.$RANDOM.$$"`
+TMPDIR=$(mktemp -d -t "godo.$RANDOM.$$")
 
-if test $? != 0; then
+if [[ $? != 0 ]]; then
 	echo "could not create temporary directory... sigh"
 	exit 1
 fi
@@ -41,13 +37,15 @@ fi
 SRCDIR="$TMPDIR/src"
 mkdir "$SRCDIR"
 
+if (( ${#FILES[*]} == 0 )); then
+	TMPFILE="$TMPDIR/tmp.go"
+	cat > "$TMPFILE"
+	FILES[${#FILES[*]}]="$TMPFILE"
+fi
+
 for file in "${FILES[@]}"; do
-	DESTFILE="$SRCDIR/$file"
-	if test "#!" = `head -n1 "$file" | cut -c 1-2 `; then
-		sed -n '2,$p' $file > $DESTFILE
-	else
-		cp "$file" $DESTFILE
-	fi
+	DESTFILE="$SRCDIR/$(basename $file)"
+	awk 'NR==1 && /^#!/ { next } { print }' "$file" > "$DESTFILE"
 done
 
 cat > $TMPDIR/Makefile <<EOF
@@ -57,5 +55,5 @@ GOFILES=$SRCDIR/*
 include \$(GOROOT)/src/Make.cmd
 EOF
 
-make --silent --directory=$TMPDIR && $TMPDIR/tmp.out "${ARGS[@]}"
-rm -rf $TMPDIR
+make --silent --directory="$TMPDIR" && "$TMPDIR/tmp.out" "${ARGS[@]}"
+rm -rf "$TMPDIR"
