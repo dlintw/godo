@@ -23,6 +23,10 @@ Or
 	
 	# assuming `script.go` begins with "#!/usr/bin/env godo"
 
+Or by piping stdin into it
+
+	echo 'package main; func main() { println("hello world") }' | godo
+
 ### Credits
 
 Inspiration came from gorun and goscript, but they're both written in Go, this is written in portable .sh and is simpler.
