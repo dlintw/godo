@@ -125,8 +125,16 @@ done
 
 # do the magic!
 
-${GC} -o "$TMPDIR/_go_.${O}" "$SRCDIR/"* &&
-${LD} -o "$TMPDIR/tmp.exe" "$TMPDIR/_go_.$O" &&
+${GC} -o "$TMPDIR/_go_.${O}" "$SRCDIR/"* 2>&1 | while read -r line; do
+	printf "%s\n" "${line//$SRCDIR\/}"
+done
+(( ${PIPESTATUS[0]} != 0)) && exit 1
+
+${LD} -o "$TMPDIR/tmp.exe" "$TMPDIR/_go_.$O" | while read -r line; do
+	printf "%s\n" "${line//$TMPDIR\/_go_.$O}"
+done
+(( ${PIPESTATUS[0]} != 0)) && exit 1
+
 "$TMPDIR/tmp.exe" "${ARGS[@]}"
 
 # clean up, clean up, everybody everywhere, clean up, clean up, everybody do your share
