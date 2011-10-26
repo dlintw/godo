@@ -104,7 +104,7 @@ done
 
 # create a temp dir to put everything into
 
-TMPDIR=$(mktemp -d -t "godo.$RANDOM.$$") || error "could not create temporary directory... sigh"
+TMPDIR=$(mktemp -d -t "godo.XXX.$$") || error "could not create temporary directory... sigh"
 SRCDIR="$TMPDIR/src"
 mkdir "$SRCDIR"
 
